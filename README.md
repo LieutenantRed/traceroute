@@ -7,6 +7,6 @@ Notes
 
 ICMP structure
 
-![Image alt](https://github.com/LieutenantRed/traceroute/tree/master/png)
+![Image alt](https://github.com/LieutenantRed/traceroute/tree/master/png/icmp-packet.png)
 
 _______________________________________________________
