@@ -31,19 +31,24 @@ void routepath(char* ip, u_char ttl, int sock) {
 	inet_aton(ip, (struct in_addr *)&(hostaddr.sin_addr));
 
 	sendto (
-		sock, 
-		buff, 
-		BUFFER_SIZE, 
-		0, 
-		(struct sockaddr *)&hostaddr, 
+		sock,
+		buff,
+		BUFFER_SIZE,
+		0,
+		(struct sockaddr *)&hostaddr,
 		sizeof(struct sockaddr_in)
 	);
 }
 
-void getpath(int sock, char *buff) {
-	uint32_t *ip_ptr = (char*)buff 
-					+ sizeof(struct eth_head)  
-					+ sizeof(struct ip_head) 
+void getpat(char* ip, int sock, char *buff) {
+	uint32_t *rcv_ip_ptr = (char*)buff
+					+ sizeof(struct eth_head)
+					+ sizeof(struct ip_head)
+					- sizeof(uint32_t);
+	uint32_t *snd_ip_ptr = (char*)buff
+					+ sizeof(struct eth_head)
+					+ sizeof(struct ip_head)
+					- sizeof(uint32_t)
 					- sizeof(uint32_t);
 	u_char *proto = (char*)buff
 					+ sizeof(struct eth_head)
@@ -53,27 +58,41 @@ void getpath(int sock, char *buff) {
 					- sizeof(uint16_t) //csum
 					- 1; //proto
 
-	uint32_t current_ip;
-	inet_aton(THIS, (struct in_addr *)&(current_ip));
+	uint32_t g_rcv_ip;
+	inet_aton(THIS, (struct in_addr *)&(g_rcv_ip));
+	uint32_t g_snd_ip;
+	inet_aton(ip, (struct in_addr *)&(g_snd_ip));
 
-	while ((ntohs(*proto) != 1) && (*ip_ptr != current_ip)) 
+	while ( (ntohs(*proto) != 1) &&
+		(*rcv_ip_ptr != g_rcv_ip) &&
+		(*snd_ip_ptr != g_snd_ip)) {
 		recvfrom(sock, buff, BUFFER_SIZE, 0, 0, 0);
+	}
 }
 
-void display(char* text, u_char num) {
-	//11 0 - ttl 
+int display(char* text, u_char num, struct _IO_FILE *stream) {
+	//11 0 - ttl
 	//3 3 - port unreachbl
 	struct icmp_head icmp;
 	memset(&icmp, 0, sizeof(struct icmp_head));
-
 	memcpy(
-		&icmp, 
-		text + sizeof(struct eth_head) + sizeof(struct ip_head), 
+		&icmp,
+		text + sizeof(struct eth_head) + sizeof(struct ip_head),
 		sizeof(struct icmp_head)
 	);
 
-	if (icmp.type == 11)
-		//TODO::OUTPUT
+	uint32_t *ip_log;
+	ip_log = (char *)text
+				+ sizeof(struct eth_head)
+				+ sizeof(struct ip_head)
+				- sizeof(uint32_t)
+				- sizeof(uint32_t);
 
+	if (icmp.type == 11)
+		fprintf(stream, "%d. %s", (int)num, inet_ntoa(*((struct in_addr *)ip_log)));
+	if (icmp.type == 3 && icmp.code == 3)
+		return 1;
+	else
+		return 0;
 
 }

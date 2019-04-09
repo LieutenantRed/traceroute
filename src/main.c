@@ -39,8 +39,10 @@ int main(int argc, char** argv) {
 
 	for (u_char ttl = 1; ttl <= 255; ++ttl) {
 		routepath(host_ip, ttl, udp);
-		getpath(raw, buffer);
-		display(buffer, ttl);
+		getpath(host_ip, raw, buffer);
+		int done = display(buffer, ttl, stdout);
+		if (done)
+			break;
 		memset(buffer, 0, BUFFER_SIZE);
 	}
 
