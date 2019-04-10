@@ -40,8 +40,9 @@ void routepath(char* ip, u_char ttl, int sock) {
 	);
 }
 
-void getpat(char* ip, int sock, char *buff) {
-	uint32_t *rcv_ip_ptr = (char*)buff
+void getpath(char* ip, int sock, char *buff) {
+	uint32_t 
+	*rcv_ip_ptr = (char*)buff
 					+ sizeof(struct eth_head)
 					+ sizeof(struct ip_head)
 					- sizeof(uint32_t);
@@ -63,10 +64,18 @@ void getpat(char* ip, int sock, char *buff) {
 	uint32_t g_snd_ip;
 	inet_aton(ip, (struct in_addr *)&(g_snd_ip));
 
+	struct timespec beg_time, cur_time;
+	clock_gettime(CLOCK_REALTIME, &beg_time);
+
 	while ( (ntohs(*proto) != 1) &&
 		(*rcv_ip_ptr != g_rcv_ip) &&
 		(*snd_ip_ptr != g_snd_ip)) {
 		recvfrom(sock, buff, BUFFER_SIZE, 0, 0, 0);
+		clock_gettime(CLOCK_REALTIME, &cur_time);
+		if (cur_time.tv_sec - beg_time.tv_sec > 10) {
+			memset(buff, 0, BUFFER_SIZE);
+			break;
+		}
 	}
 }
 
@@ -88,11 +97,19 @@ int display(char* text, u_char num, struct _IO_FILE *stream) {
 				- sizeof(uint32_t)
 				- sizeof(uint32_t);
 
-	if (icmp.type == 11)
-		fprintf(stream, "%d. %s", (int)num, inet_ntoa(*((struct in_addr *)ip_log)));
-	if (icmp.type == 3 && icmp.code == 3)
-		return 1;
-	else
+	if (icmp.type == 0x0b) {
+		fprintf(stdout, "%d. %s\n", (int)num, inet_ntoa(*((struct in_addr *)ip_log)));
 		return 0;
+	}
+
+	if (icmp.type == 3 && icmp.code == 3) {
+		fprintf(stdout, "%d. %s\n", (int)num, inet_ntoa(*((struct in_addr *)ip_log)));
+		return 1;
+	}
+	else {
+		fprintf(stdout, "%d. hidden\n", (int)num);
+		return 0;
+	}
+		
 
 }
