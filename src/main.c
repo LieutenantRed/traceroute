@@ -37,7 +37,7 @@ int main(int argc, char** argv) {
 	char buffer[BUFFER_SIZE]; //here will be result?
 	memset(buffer, 0, BUFFER_SIZE);
 
-	for (u_char ttl = 1; ttl <= 255; ++ttl) {
+	for (u_char ttl = 0; ttl <= 255; ++ttl) {
 		routepath(host_ip, ttl, udp);
 		getpath(host_ip, raw, buffer);
 		int done = display(buffer, ttl, stdout);
