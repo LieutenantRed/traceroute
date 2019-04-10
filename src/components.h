@@ -6,7 +6,7 @@
 #include <string.h>
 #include <stddef.h>
 #include <stdint.h>
-
+#include <time.h>
 #define IP_MAX_LENGTH 15
 
 #define handle_error(msg) \
